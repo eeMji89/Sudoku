@@ -10,7 +10,7 @@ def crear_tablero():
     return tablero
 
 # Llenar algunas casillas aleatoriamente con números del 1 al 9
-def llenar_casillas_aleatorias(tablero, cantidad=25):
+def llenar_casillas_aleatorias(tablero, cantidad=30):
     for _ in range(cantidad):
         fila, columna = random.randint(0, 8), random.randint(0, 8)
         while tablero[fila, columna] != 0:
@@ -47,8 +47,10 @@ def insertar_numero(event, fila, columna):
         if num and 1 <= num <= 9:
             if es_valido(tablero, fila, columna, num):
                 tablero[fila, columna] = num
+                celdas[fila][columna].config(state='normal')
                 celdas[fila][columna].delete(0, tk.END)
                 celdas[fila][columna].insert(0, str(num))
+                celdas[fila][columna].config(state='disabled')
                 if es_completo(tablero):
                     messagebox.showinfo("¡Felicidades!", "¡Has completado el Sudoku!")
             else:
@@ -64,20 +66,40 @@ def crear_interfaz():
     global celdas, tablero
     celdas = [[None] * 9 for _ in range(9)]
     tablero = crear_tablero()
-
-    for fila in range(9):
-        for columna in range(9):
-            celda = tk.Entry(ventana, width=3, font=('Arial', 18), justify='center')
-            celda.grid(row=fila, column=columna, padx=(1 if columna % 3 else 3), pady=(1 if fila % 3 else 3))
-            
-            if tablero[fila, columna] != 0:
-                celda.insert(0, str(tablero[fila, columna]))
-                celda.config(state='disabled', disabledforeground='black')
-            else:
-                celda.bind("<Button-1>", lambda event, r=fila, c=columna: insertar_numero(event, r, c))
-            celdas[fila][columna] = celda
+    for fila_subgrid in range(3):
+            for columna_subgrid in range(3):
+                subgrid_frame = tk.Frame(
+                    ventana,
+                    bg="black", 
+                    highlightbackground="black",
+                    highlightthickness=2 
+                )
+                subgrid_frame.grid(row=fila_subgrid * 3, column=columna_subgrid * 3, 
+                                rowspan=3, columnspan=3, padx=1, pady=1)
+                for i in range(3):
+                    for j in range(3):
+                        fila = fila_subgrid * 3 + i
+                        columna = columna_subgrid * 3 + j
+                        celda = tk.Entry(
+                            subgrid_frame,
+                            width=3,
+                            font=('Arial', 18),
+                            justify='center',
+                            relief="solid",
+                            bd=1
+                        )
+                        celda.grid(row=i, column=j)
+                        if tablero[fila, columna] != 0:
+                            celda.insert(0, str(tablero[fila, columna]))
+                            celda.config(state='disabled', disabledforeground='black')
+                        else:
+                            celda.config(state='disabled')
+                            celda.bind("<Button-1>", lambda event, r=fila, c=columna: insertar_numero(event, r, c))
+                        celdas[fila][columna] = celda
 
     ventana.mainloop()
+
+    
 
 
 crear_interfaz()
