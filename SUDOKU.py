@@ -45,15 +45,29 @@ def es_valido(tablero, fila, columna, num):
     return True
 
 # Comprobar si el tablero está completo y cumple con las reglas
-def es_completo(tablero):
+def es_completo(tablero, ventana):
+    # Paso 1: Verificar si hay celdas vacías
     for fila in range(9):
         for columna in range(9):
-            if tablero[fila, columna] == 0 or not es_valido(tablero, fila, columna, tablero[fila, columna]):
+            if tablero[fila, columna] == 0:
+                print("Casilla vacía detectada. Tablero aún incompleto.")
                 return False
+
+    # Paso 2: Validar el tablero completo solo si todas las celdas están llenas
+    print("Todas las celdas están llenas. Verificando validez del tablero...")
+    for fila in range(9):
+        for columna in range(9):
+            if not es_valido(tablero, fila, columna, tablero[fila, columna]):
+                print(f"Conflicto detectado en ({fila}, {columna}) con valor {tablero[fila, columna]}")
+
+    # Si todas las celdas están llenas y el tablero es válido
+    print("Tablero completo y válido. Cambiando color de fondo.")
+    ventana.config(bg="lightgreen")
+    messagebox.showinfo("¡Felicidades!", "¡Has completado el Sudoku!")
     return True
 
 # Insertar número en la casilla seleccionada, verificando con la solución
-def insertar_numero(event, fila, columna):
+def insertar_numero(event, fila, columna, ventana):
     if juego[fila, columna] == 0:  # Solo permitir en casillas vacías
         num = simpledialog.askinteger("Entrada", f"Inserta un número (1-9) para la posición ({fila + 1}, {columna + 1})")
         if num and 1 <= num <= 9:
@@ -63,8 +77,11 @@ def insertar_numero(event, fila, columna):
                 celdas[fila][columna].delete(0, tk.END)
                 celdas[fila][columna].insert(0, str(num))
                 celdas[fila][columna].config(state='disabled')
-                if es_completo(juego):
-                    messagebox.showinfo("¡Felicidades!", "¡Has completado el Sudoku!")
+                print("Llamando a es_completo después de la inserción.")
+                if es_completo(juego, ventana):
+                    return  # Terminar la función si el juego está completo
+                else:
+                    print("aun no esta completo")
             else:
                 messagebox.showerror("Error", "Número incorrecto. Esta casilla no contiene ese número en la solución.")
         else:
@@ -114,21 +131,14 @@ def crear_interfaz():
                 for j in range(3):
                     fila = fila_subgrid * 3 + i
                     columna = columna_subgrid * 3 + j
-                    celda = tk.Entry(
-                        subgrid_frame,
-                        width=3,
-                        font=('Arial', 18),
-                        justify='center',
-                        relief="solid",
-                        bd=1
-                    )
+                    celda = tk.Entry(subgrid_frame, width=3,font=('Arial', 18), justify='center', relief="solid",bd=1)
                     celda.grid(row=i, column=j)
                     if juego[fila, columna] != 0:  # Mostrar solo los números iniciales del juego
                         celda.insert(0, str(juego[fila, columna]))
                         celda.config(state='disabled', disabledforeground='black')
                     else:
                         celda.config(state='disabled')
-                        celda.bind("<Button-1>", lambda event, r=fila, c=columna: insertar_numero(event, r, c))
+                        celda.bind("<Button-1>", lambda event, r=fila, c=columna, v=ventana: insertar_numero(event, r, c,v))
                     celdas[fila][columna] = celda
 
     # Botón para mostrar la solución completa
